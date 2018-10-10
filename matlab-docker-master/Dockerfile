@@ -1,22 +1,21 @@
 FROM ubuntu:16.04
 
-ADD matlab.txt /mcr-install/matlab.txt
-ADD id_rsa.pub /root/.ssh/authorized_keys
-ADD assets /root/assets
 
-RUN \
-   apt-get update && \
-   apt-get install -y curl wget xorg unzip openssh-server dcmtk && \
-   mkdir /var/run/sshd
+RUN apt-get -qq update && apt-get -qq install -y \
+    unzip \
+    xorg \
+    wget \
+    curl && \
+    mkdir /mcr-install && \
+    mkdir /opt/mcr && \
+    cd /mcr-install && \
+    wget http://www.mathworks.com/supportfiles/downloads/R2018a/deployment_files/R2018a/installers/glnxa64/MCR_R2018a_glnxa64_installer.zip && \
+    cd /mcr-install && \
+    unzip -q MCR_R2018a_glnxa64_installer.zip && \
+    ./install -destinationFolder /opt/mcr -agreeToLicense yes -mode silent && \
+    cd / && \
+    rm -rf mcr-install
 
-RUN \
-   cd /mcr-install && \
-   wget -nv http://www.mathworks.de/supportfiles/downloads/R2018a/deployment_files/R2018a/installers/glnxa64/MCR_R2018a_glnxa64_installer.zip && \
-   unzip MCR_R2018a_glnxa64_installer.zip && \
-   mkdir /opt/mcr && \
-   ./install -inputFile matlab.txt && \
-   cd / && \
-   rm -rf mcr-install
-
-EXPOSE 22
-CMD ["/usr/sbin/sshd", "-D"]
+# Configure environment variables for MCR
+ENV LD_LIBRARY_PATH /opt/mcr/v94/runtime/glnxa64:/opt/mcr/v94/bin/glnxa64:/opt/mcr/v94/sys/os/glnxa64
+ENV XAPPLRESDIR /opt/mcr/v94/X11/app-defaults
